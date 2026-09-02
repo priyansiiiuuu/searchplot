@@ -330,7 +330,7 @@
 }
 
 .score-value-num {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 800;
   line-height: 1;
   color: var(--text-h);
@@ -349,10 +349,25 @@
   margin-left: 12px;
 }
 
-.score-value-grade.excellent { background-color: var(--success-bg); color: var(--success); }
-.score-value-grade.good { background-color: var(--info-bg); color: var(--info); }
-.score-value-grade.needs-improvement { background-color: var(--warning-bg); color: var(--warning); }
-.score-value-grade.poor { background-color: var(--error-bg); color: var(--error); }
+.score-value-grade.excellent {
+  background-color: var(--success-bg);
+  color: var(--success);
+}
+
+.score-value-grade.good {
+  background-color: var(--info-bg);
+  color: var(--info);
+}
+
+.score-value-grade.needs-improvement {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+}
+
+.score-value-grade.poor {
+  background-color: var(--error-bg);
+  color: var(--error);
+}
 
 .score-bar-bg {
   height: 6px;
@@ -368,10 +383,21 @@
   transition: width 0.5s ease-out;
 }
 
-.score-bar-fill.excellent { background-color: var(--success); }
-.score-bar-fill.good { background-color: var(--info); }
-.score-bar-fill.needs-improvement { background-color: var(--warning); }
-.score-bar-fill.poor { background-color: var(--error); }
+.score-bar-fill.excellent {
+  background-color: var(--success);
+}
+
+.score-bar-fill.good {
+  background-color: var(--info);
+}
+
+.score-bar-fill.needs-improvement {
+  background-color: var(--warning);
+}
+
+.score-bar-fill.poor {
+  background-color: var(--error);
+}
 
 .score-metrics-col {
   display: grid;
@@ -402,9 +428,17 @@
   color: var(--text-h);
 }
 
-.sm-value.success { color: var(--success); }
-.sm-value.error { color: var(--error); }
-.sm-value.warning { color: var(--warning); }
+.sm-value.success {
+  color: var(--success);
+}
+
+.sm-value.error {
+  color: var(--error);
+}
+
+.sm-value.warning {
+  color: var(--warning);
+}
 
 /* =========================================================
    COMPACT STATISTICS GRIDS
@@ -625,10 +659,25 @@
   line-height: 1.2;
 }
 
-.score-badge.excellent { background-color: var(--success-bg); color: var(--success); }
-.score-badge.good { background-color: var(--info-bg); color: var(--info); }
-.score-badge.needs-improvement { background-color: var(--warning-bg); color: var(--warning); }
-.score-badge.poor { background-color: var(--error-bg); color: var(--error); }
+.score-badge.excellent {
+  background-color: var(--success-bg);
+  color: var(--success);
+}
+
+.score-badge.good {
+  background-color: var(--info-bg);
+  color: var(--info);
+}
+
+.score-badge.needs-improvement {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+}
+
+.score-badge.poor {
+  background-color: var(--error-bg);
+  color: var(--error);
+}
 
 .empty-val {
   color: var(--error);
@@ -728,8 +777,13 @@
   word-break: break-all;
 }
 
-.tech-card-value.success { color: var(--success); }
-.tech-card-value.error { color: var(--error); }
+.tech-card-value.success {
+  color: var(--success);
+}
+
+.tech-card-value.error {
+  color: var(--error);
+}
 
 /* =========================================================
    ISSUES LIST COMPONENT
@@ -772,8 +826,13 @@
   flex-shrink: 0;
 }
 
-.indicator-dot-saas.error { background-color: var(--error); }
-.indicator-dot-saas.warning { background-color: var(--warning); }
+.indicator-dot-saas.error {
+  background-color: var(--error);
+}
+
+.indicator-dot-saas.warning {
+  background-color: var(--warning);
+}
 
 .severity-label-saas {
   font-size: 11px;
@@ -782,8 +841,13 @@
   letter-spacing: 0.5px;
 }
 
-.severity-label-saas.error { color: var(--error); }
-.severity-label-saas.warning { color: var(--warning); }
+.severity-label-saas.error {
+  color: var(--error);
+}
+
+.severity-label-saas.warning {
+  color: var(--warning);
+}
 
 .issue-content-col {
   flex: 1;
@@ -912,10 +976,21 @@
   transition: width 0.5s ease-out;
 }
 
-.dist-progress-fill.excellent { background-color: var(--success); }
-.dist-progress-fill.good { background-color: var(--info); }
-.dist-progress-fill.needs-improvement { background-color: var(--warning); }
-.dist-progress-fill.poor { background-color: var(--error); }
+.dist-progress-fill.excellent {
+  background-color: var(--success);
+}
+
+.dist-progress-fill.good {
+  background-color: var(--info);
+}
+
+.dist-progress-fill.needs-improvement {
+  background-color: var(--warning);
+}
+
+.dist-progress-fill.poor {
+  background-color: var(--error);
+}
 
 .dist-count-col {
   width: 70px;
@@ -993,7 +1068,9 @@
 }
 
 @keyframes spinner {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-container-saas h3 {
