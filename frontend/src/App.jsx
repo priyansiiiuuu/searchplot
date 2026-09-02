@@ -103,9 +103,44 @@ function App() {
       if (auditType === "site") {
         setSiteResult(data);
         setActiveTab("site");
+        const averageScore = Math.round(Number(data?.average_score) || 0);
+        const grade =
+          averageScore >= 90
+            ? "Excellent"
+            : averageScore >= 75
+              ? "Good"
+              : averageScore >= 50
+                ? "Needs Improvement"
+                : "Poor";
+        setAuditHistory((prev) => [
+          {
+            id: Date.now(),
+            url: targetUrl,
+            type: "site",
+            score: averageScore,
+            grade,
+            pages: data?.pages_crawled || 0,
+            data,
+            timestamp: new Date().toISOString(),
+          },
+          ...prev,
+        ].slice(0, 10));
       } else {
         setResult(data);
         setActiveTab("page");
+        const score = Number(data?.seo_analysis?.score) || 0;
+        setAuditHistory((prev) => [
+          {
+            id: Date.now(),
+            url: targetUrl,
+            type: "page",
+            score,
+            grade: data?.seo_analysis?.grade || "Unknown",
+            data,
+            timestamp: new Date().toISOString(),
+          },
+          ...prev,
+        ].slice(0, 10));
       }
     } catch (err) {
       console.error("SEARCHPILOT ERROR:", err);
@@ -305,19 +340,19 @@ function App() {
   const bestPage =
     siteScores.length > 0
       ? sitePages
-          .filter((page) => page.grade !== "Failed")
-          .reduce((best, page) =>
-            page.score > best.score ? page : best
-          )
+        .filter((page) => page.grade !== "Failed")
+        .reduce((best, page) =>
+          page.score > best.score ? page : best
+        )
       : null;
 
   const worstPage =
     sitePages.length > 0
       ? sitePages.reduce((worst, page) => {
-          if (worst.grade === "Failed") return worst;
-          if (page.grade === "Failed") return page;
-          return page.score < worst.score ? page : worst;
-        })
+        if (worst.grade === "Failed") return worst;
+        if (page.grade === "Failed") return page;
+        return page.score < worst.score ? page : worst;
+      })
       : null;
 
   const scoreBuckets = [
