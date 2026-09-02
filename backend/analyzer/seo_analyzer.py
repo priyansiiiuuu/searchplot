@@ -21,48 +21,31 @@ STOP_WORDS = {
     "login", "sign", "read", "edit", "view", "main",
     "content", "article", "articles", "new", "use", "used",
     "using", "get", "got", "make", "made", "may", "must",
-    "like", "just", "well", "back", "see", "see", "now",
+    "like", "just", "well", "back", "see", "now",
     "way", "many", "much", "first", "last", "next",
     "including", "include", "includes", "without", "within",
     "based", "large", "largest", "best", "free", "today",
     "learn", "learned", "start", "started", "help", "helps",
-    "provide", "provides", "get", "getting", "power",
-    "new", "online", "website", "web", "site"
+    "provide", "provides", "getting", "power", "online",
+    "website", "web", "site"
 }
 
 
 GENERIC_SEO_TERMS = {
-    "seo",
-    "search",
-    "engine",
-    "optimization",
-    "marketing",
-    "digital",
-    "business",
-    "tool",
-    "tools",
-    "software",
-    "service",
-    "services",
-    "platform",
-    "solution",
-    "solutions",
-    "product",
-    "products",
-    "company",
-    "companies",
-    "information",
-    "resource",
-    "resources",
-    "data",
-    "link",
-    "links",
-    "brand",
-    "authority",
-    "local",
-    "content",
-    "page",
-    "pages"
+    "seo", "search", "engine", "optimization", "marketing",
+    "digital", "business", "tool", "tools", "software",
+    "service", "services", "platform", "solution", "solutions",
+    "product", "products", "company", "companies",
+    "information", "resource", "resources", "data", "link",
+    "links", "brand", "authority", "local", "content",
+    "page", "pages"
+}
+
+
+NAVIGATION_TERMS = {
+    "menu", "login", "signup", "signin", "sign", "read",
+    "view", "home", "account", "privacy", "cookie",
+    "cookies", "terms", "contact"
 }
 
 
@@ -71,24 +54,16 @@ GENERIC_SEO_TERMS = {
 # ============================================================
 
 def clean_keyword(keyword: str) -> str:
-
     keyword = keyword.lower().strip()
 
-    keyword = re.sub(
-        r"\s+",
-        " ",
-        keyword
-    )
+    keyword = re.sub(r"\s+", " ", keyword)
 
-    keyword = keyword.strip(
-        " .,!?;:'\"()[]{}"
-    )
+    keyword = keyword.strip(" .,!?;:'\"()[]{}")
 
     return keyword
 
 
 def is_useful_keyword(keyword: str) -> bool:
-
     keyword = clean_keyword(keyword)
 
     if not keyword:
@@ -96,19 +71,15 @@ def is_useful_keyword(keyword: str) -> bool:
 
     words = keyword.split()
 
-    # Ignore very short terms
     if len(keyword) < 4:
         return False
 
-    # Ignore terms consisting entirely of stop words
     if all(word in STOP_WORDS for word in words):
         return False
 
-    # Ignore generic single-word SEO terminology
     if len(words) == 1 and keyword in GENERIC_SEO_TERMS:
         return False
 
-    # Ignore single-word stop words
     if len(words) == 1 and keyword in STOP_WORDS:
         return False
 
@@ -116,17 +87,13 @@ def is_useful_keyword(keyword: str) -> bool:
 
 
 def extract_brand_terms(url: str, title: str) -> set:
-
     terms = set()
 
     parsed = urlparse(url)
 
     domain = parsed.netloc.lower()
 
-    domain = domain.replace(
-        "www.",
-        ""
-    )
+    domain = domain.replace("www.", "")
 
     domain_name = domain.split(".")[0]
 
@@ -138,10 +105,7 @@ def extract_brand_terms(url: str, title: str) -> set:
         title.lower()
     )
 
-    # Words from the title that look like brand names.
-    # We only use this as a soft filter.
     for word in title_words:
-
         if (
             word not in STOP_WORDS
             and word not in GENERIC_SEO_TERMS
@@ -165,22 +129,36 @@ def keyword_relevance(
     # Frequency
     score += min(count * 2, 20)
 
-    # Multi-word phrases are generally more useful
+    # Specific phrases are generally more useful
     if len(words) == 2:
         score += 8
-
     elif len(words) >= 3:
         score += 12
 
-    # Reasonable density gets a small boost
+    # Reasonable density
     if 0.2 <= density <= 3:
         score += 5
 
-    # Longer specific terms get a small boost
+    # Specificity
     if len(keyword) >= 8:
         score += 3
 
     return score
+
+
+def add_issue(
+    issues: list,
+    issue_type: str,
+    category: str,
+    message: str,
+    recommendation: str
+):
+    issues.append({
+        "type": issue_type,
+        "category": category,
+        "message": message,
+        "recommendation": recommendation
+    })
 
 
 # ============================================================
@@ -194,51 +172,38 @@ def analyze_seo(data: dict) -> dict:
     issues = []
     passed = []
 
-    seo = data.get(
-        "seo",
-        {}
-    )
+    seo = data.get("seo", {})
+    content = data.get("content", {})
+    links = data.get("links", {})
 
-    content = data.get(
-        "content",
-        {}
-    )
-
-    links = data.get(
-        "links",
-        {}
-    )
+    # ========================================================
+    # EXTRACT DATA
+    # ========================================================
 
     title = seo.get(
-        "title",
-        {}
+        "title", {}
     ).get(
-        "value",
-        ""
-    )
+        "value", ""
+    ).strip()
 
     description = seo.get(
-        "meta_description",
-        {}
+        "meta_description", {}
     ).get(
-        "value",
-        ""
+        "value", ""
+    ).strip()
+
+    h1_data = seo.get(
+        "h1", {}
     )
 
-    h1 = seo.get(
-        "h1",
-        {}
-    ).get(
+    h1 = h1_data.get(
         "values",
         []
     )
 
-    h1_count = seo.get(
-        "h1",
-        {}
-    ).get(
+    h1_count = h1_data.get(
         "count",
-        0
+        len(h1)
     )
 
     h2 = content.get(
@@ -277,6 +242,11 @@ def analyze_seo(data: dict) -> dict:
         {}
     )
 
+    structured_data = seo.get(
+        "structured_data",
+        {}
+    )
+
     word_count = content.get(
         "word_count",
         0
@@ -307,46 +277,37 @@ def analyze_seo(data: dict) -> dict:
 
         score -= 15
 
-        issues.append({
-            "type": "error",
-            "category": "Title",
-            "message": "Page is missing a title tag.",
-            "recommendation": (
-                "Add a unique title between 30–60 characters."
-            )
-        })
+        add_issue(
+            issues,
+            "error",
+            "Title",
+            "Page is missing a title tag.",
+            "Add a unique, descriptive title around 30–60 characters."
+        )
 
     elif title_length < 30:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Title",
-            "message": (
-                f"Title is too short "
-                f"({title_length} characters)."
-            ),
-            "recommendation": (
-                "Make the title more descriptive."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Title",
+            f"Title is too short ({title_length} characters).",
+            "Make the title more descriptive while keeping it concise."
+        )
 
     elif title_length > 60:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Title",
-            "message": (
-                f"Title is too long "
-                f"({title_length} characters)."
-            ),
-            "recommendation": (
-                "Keep the title around 30–60 characters."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Title",
+            f"Title is too long ({title_length} characters).",
+            "Keep the title around 30–60 characters to reduce truncation risk."
+        )
 
     else:
 
@@ -358,56 +319,43 @@ def analyze_seo(data: dict) -> dict:
     # META DESCRIPTION
     # ========================================================
 
-    description_length = len(
-        description
-    )
+    description_length = len(description)
 
     if not description:
 
         score -= 15
 
-        issues.append({
-            "type": "error",
-            "category": "Meta Description",
-            "message": (
-                "Page is missing a meta description."
-            ),
-            "recommendation": (
-                "Add a descriptive meta description."
-            )
-        })
+        add_issue(
+            issues,
+            "error",
+            "Meta Description",
+            "Page is missing a meta description.",
+            "Add a unique, useful description that summarizes the page."
+        )
 
     elif description_length < 70:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Meta Description",
-            "message": (
-                f"Meta description is short "
-                f"({description_length} characters)."
-            ),
-            "recommendation": (
-                "Expand the description."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Meta Description",
+            f"Meta description is short ({description_length} characters).",
+            "Expand the description so it communicates the page value clearly."
+        )
 
     elif description_length > 160:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Meta Description",
-            "message": (
-                f"Meta description is long "
-                f"({description_length} characters)."
-            ),
-            "recommendation": (
-                "Keep it below approximately 160 characters."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Meta Description",
+            f"Meta description is long ({description_length} characters).",
+            "Keep it around 70–160 characters to reduce truncation risk."
+        )
 
     else:
 
@@ -419,35 +367,35 @@ def analyze_seo(data: dict) -> dict:
     # H1
     # ========================================================
 
-    if h1_count == 0:
+    non_empty_h1 = [
+        item.strip()
+        for item in h1
+        if isinstance(item, str) and item.strip()
+    ]
+
+    if h1_count == 0 or not non_empty_h1:
 
         score -= 15
 
-        issues.append({
-            "type": "error",
-            "category": "H1",
-            "message": (
-                "Page has no H1 heading."
-            ),
-            "recommendation": (
-                "Add one clear H1 describing the page."
-            )
-        })
+        add_issue(
+            issues,
+            "error",
+            "H1",
+            "Page has no usable H1 heading.",
+            "Add one clear H1 that describes the main purpose of the page."
+        )
 
     elif h1_count > 1:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "H1",
-            "message": (
-                f"Page has {h1_count} H1 headings."
-            ),
-            "recommendation": (
-                "Use one primary H1."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "H1",
+            f"Page has {h1_count} H1 headings.",
+            "Use one primary H1 and use H2/H3 elements for supporting sections."
+        )
 
     else:
 
@@ -463,16 +411,13 @@ def analyze_seo(data: dict) -> dict:
 
         score -= 3
 
-        issues.append({
-            "type": "warning",
-            "category": "Headings",
-            "message": (
-                "Page has no H2 headings."
-            ),
-            "recommendation": (
-                "Use H2 headings to structure the content."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Headings",
+            "Page has no H2 headings.",
+            "Use H2 headings where appropriate to organize substantial sections."
+        )
 
     else:
 
@@ -484,29 +429,44 @@ def analyze_seo(data: dict) -> dict:
     # IMAGES
     # ========================================================
 
-    if total_images > 0 and missing_alt > 0:
+    if total_images > 0:
 
-        score -= min(
-            missing_alt * 2,
-            10
+        alt_coverage = (
+            ((total_images - missing_alt) / total_images) * 100
         )
 
-        issues.append({
-            "type": "warning",
-            "category": "Images",
-            "message": (
-                f"{missing_alt} image(s) are missing alt text."
-            ),
-            "recommendation": (
-                "Add concise, descriptive alt text to "
-                "meaningful images."
-            )
-        })
+        if missing_alt > 0:
 
-    elif total_images > 0:
+            score -= min(
+                missing_alt * 2,
+                10
+            )
+
+            add_issue(
+                issues,
+                "warning",
+                "Images",
+                (
+                    f"{missing_alt} of {total_images} image(s) "
+                    f"are missing alt text "
+                    f"({alt_coverage:.0f}% coverage)."
+                ),
+                (
+                    "Add concise, descriptive alt text to meaningful "
+                    "images. Decorative images can use an empty alt attribute."
+                )
+            )
+
+        else:
+
+            passed.append(
+                "All images have alt text."
+            )
+
+    else:
 
         passed.append(
-            "All images have alt text."
+            "Page contains no images requiring alt text."
         )
 
     # ========================================================
@@ -517,42 +477,99 @@ def analyze_seo(data: dict) -> dict:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Canonical",
-            "message": (
-                "Page is missing a canonical URL."
-            ),
-            "recommendation": (
-                "Add a canonical URL."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Canonical",
+            "Page is missing a canonical URL.",
+            "Add a canonical URL that represents the preferred version of the page."
+        )
 
     else:
 
-        passed.append(
-            "Canonical URL is present."
-        )
+        canonical_parsed = urlparse(canonical)
+        page_parsed = urlparse(url)
+
+        if canonical_parsed.scheme not in ("http", "https"):
+
+            score -= 5
+
+            add_issue(
+                issues,
+                "warning",
+                "Canonical",
+                "Canonical URL uses an invalid URL scheme.",
+                "Use a valid absolute HTTP or HTTPS canonical URL."
+            )
+
+        elif (
+            canonical_parsed.netloc
+            and page_parsed.netloc
+            and canonical_parsed.netloc.lower()
+            != page_parsed.netloc.lower()
+        ):
+
+            score -= 5
+
+            add_issue(
+                issues,
+                "warning",
+                "Canonical",
+                "Canonical URL points to a different hostname.",
+                "Verify that the cross-domain canonical is intentional."
+            )
+
+        else:
+
+            passed.append(
+                "Canonical URL is present."
+            )
 
     # ========================================================
-    # ROBOTS
+    # ROBOTS / INDEXING
     # ========================================================
 
-    if robots and "noindex" in robots.lower():
+    robots_lower = (
+        robots.lower()
+        if isinstance(robots, str)
+        else ""
+    )
+
+    robot_directives = {
+        directive.strip().lower()
+        for directive in robots_lower.split(",")
+        if directive.strip()
+    }
+
+    if "noindex" in robot_directives:
 
         score -= 10
 
-        issues.append({
-            "type": "error",
-            "category": "Indexing",
-            "message": (
-                "Page contains a noindex directive."
-            ),
-            "recommendation": (
-                "Remove noindex if the page should "
-                "appear in search results."
+        add_issue(
+            issues,
+            "error",
+            "Indexing",
+            "Page contains a noindex directive.",
+            (
+                "Remove noindex if this page is intended to appear "
+                "in search engine results."
             )
-        })
+        )
+
+    elif "none" in robot_directives:
+
+        score -= 10
+
+        add_issue(
+            issues,
+            "error",
+            "Indexing",
+            "Page uses the robots 'none' directive.",
+            (
+                "Remove the 'none' directive if the page should be "
+                "indexed and its links followed."
+            )
+        )
 
     else:
 
@@ -568,118 +585,190 @@ def analyze_seo(data: dict) -> dict:
 
         score -= 3
 
-        issues.append({
-            "type": "warning",
-            "category": "Social",
-            "message": (
-                "Open Graph metadata is missing."
-            ),
-            "recommendation": (
-                "Add Open Graph metadata."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Social",
+            "Open Graph metadata is missing.",
+            "Add Open Graph metadata so shared links have better previews."
+        )
 
     else:
 
+        required_og = {
+            "og:title",
+            "og:description",
+            "og:image",
+            "og:url"
+        }
+
+        present_og = {
+            key
+            for key, value in open_graph.items()
+            if isinstance(value, str) and value.strip()
+        }
+
+        missing_og = sorted(
+            required_og - present_og
+        )
+
+        if missing_og:
+
+            score -= min(
+                len(missing_og),
+                3
+            )
+
+            add_issue(
+                issues,
+                "warning",
+                "Social",
+                (
+                    "Open Graph metadata is incomplete. "
+                    f"Missing: {', '.join(missing_og)}."
+                ),
+                (
+                    "Add the missing Open Graph properties to improve "
+                    "social sharing previews."
+                )
+            )
+
+        else:
+
+            passed.append(
+                "Core Open Graph metadata is present."
+            )
+
+    # ========================================================
+    # STRUCTURED DATA
+    # ========================================================
+
+    structured_data_count = structured_data.get(
+        "count",
+        0
+    )
+
+    if structured_data_count > 0:
+
         passed.append(
-            "Open Graph metadata is present."
+            f"Page contains {structured_data_count} structured data block(s)."
+        )
+
+    else:
+
+        add_issue(
+            issues,
+            "info",
+            "Structured Data",
+            "No JSON-LD structured data was detected.",
+            (
+                "Consider adding relevant Schema.org structured data "
+                "where it matches the page content."
+            )
         )
 
     # ========================================================
     # CONTENT
     # ========================================================
 
-    if word_count < 300:
+    if word_count < 100:
+
+        score -= 8
+
+        add_issue(
+            issues,
+            "warning",
+            "Content",
+            f"Page contains only {word_count} words of visible content.",
+            (
+                "Review whether the page provides enough useful content "
+                "to satisfy its search intent."
+            )
+        )
+
+    elif word_count < 300:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Content",
-            "message": (
-                f"Page contains only {word_count} words."
-            ),
-            "recommendation": (
-                "Add more useful, relevant content."
+        add_issue(
+            issues,
+            "warning",
+            "Content",
+            f"Page contains {word_count} words of visible content.",
+            (
+                "Consider whether additional useful content is needed. "
+                "Word count alone does not determine search performance."
             )
-        })
+        )
 
     else:
 
         passed.append(
-            f"Page has {word_count} words of content."
+            f"Page has {word_count} words of visible content."
         )
 
     # ========================================================
     # LINKS
     # ========================================================
 
-    total_links = (
-        internal_links +
-        external_links
-    )
+    total_links = internal_links + external_links
 
     if total_links == 0:
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Links",
-            "message": (
-                "Page contains no links."
-            ),
-            "recommendation": (
-                "Add relevant internal and external links."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Links",
+            "Page contains no crawlable links.",
+            "Add relevant internal links where they improve navigation and discovery."
+        )
 
     else:
 
         passed.append(
             f"Page contains {total_links} links "
-            f"({internal_links} internal, "
-            f"{external_links} external)."
+            f"({internal_links} internal, {external_links} external)."
         )
 
     if internal_links == 0:
 
         score -= 3
 
-        issues.append({
-            "type": "warning",
-            "category": "Internal Links",
-            "message": (
-                "Page has no internal links."
-            ),
-            "recommendation": (
-                "Add relevant links to other pages "
-                "on the website."
+        add_issue(
+            issues,
+            "warning",
+            "Internal Links",
+            "Page has no internal links.",
+            (
+                "Add relevant internal links where appropriate to help "
+                "users and search engines discover related content."
             )
-        })
+        )
+    else:
+
+        passed.append(
+            f"Page contains {internal_links} internal link(s)."
+        )
 
     # ========================================================
     # HTTPS
     # ========================================================
 
-    parsed_url = urlparse(
-        url
-    )
+    parsed_url = urlparse(url)
 
     if parsed_url.scheme != "https":
 
         score -= 5
 
-        issues.append({
-            "type": "warning",
-            "category": "Security",
-            "message": (
-                "Website is not using HTTPS."
-            ),
-            "recommendation": (
-                "Use HTTPS for the website."
-            )
-        })
+        add_issue(
+            issues,
+            "warning",
+            "Security",
+            "Website is not using HTTPS.",
+            "Use HTTPS to protect visitors and secure connections."
+        )
 
     else:
 
@@ -699,11 +788,10 @@ def analyze_seo(data: dict) -> dict:
     keyword_analysis = []
 
     title_lower = title.lower()
-
     description_lower = description.lower()
 
     h1_text = " ".join(
-        h1
+        non_empty_h1
     ).lower()
 
     brand_terms = extract_brand_terms(
@@ -730,43 +818,25 @@ def analyze_seo(data: dict) -> dict:
             0
         )
 
-        if not is_useful_keyword(
-            keyword
-        ):
+        if not is_useful_keyword(keyword):
             continue
 
         words = keyword.split()
 
-        # Ignore obvious branded/domain terms
+        # Avoid obvious branded/domain terms
         if len(words) == 1 and keyword in brand_terms:
             continue
 
-        # Ignore phrases containing obvious generic navigation terms
+        # Avoid navigation/UI phrases
         if any(
-            word in {
-                "menu",
-                "login",
-                "signup",
-                "sign",
-                "read",
-                "view",
-                "home"
-            }
+            word in NAVIGATION_TERMS
             for word in words
         ):
             continue
 
-        in_title = (
-            keyword in title_lower
-        )
-
-        in_h1 = (
-            keyword in h1_text
-        )
-
-        in_description = (
-            keyword in description_lower
-        )
+        in_title = keyword in title_lower
+        in_h1 = keyword in h1_text
+        in_description = keyword in description_lower
 
         placement_count = sum([
             in_title,
@@ -835,7 +905,7 @@ def analyze_seo(data: dict) -> dict:
     )
 
     # ========================================================
-    # STUFFING
+    # KEYWORD STUFFING
     # ========================================================
 
     stuffing_warnings = [
@@ -850,42 +920,50 @@ def analyze_seo(data: dict) -> dict:
 
     if opportunities:
 
-        issues.append({
-            "type": "warning",
-            "category": "Keyword Opportunity",
-            "message": (
-                f"{len(opportunities)} relevant keyword(s) "
-                "appear frequently in the content but are "
-                "missing from the title, H1 and meta description."
+        add_issue(
+            issues,
+            "warning",
+            "Keyword Opportunity",
+            (
+                f"{len(opportunities)} relevant keyword(s) appear "
+                "frequently in the content but are missing from the "
+                "title, H1 and meta description."
             ),
-            "recommendation": (
-                "Consider naturally incorporating the most "
-                "relevant keywords into important SEO elements. "
+            (
+                "Consider naturally incorporating the strongest "
+                "relevant terms into important SEO elements. "
                 "Do not force keywords where they do not fit."
             )
-        })
+        )
 
     if stuffing_warnings:
 
-        issues.append({
-            "type": "warning",
-            "category": "Keyword Stuffing",
-            "message": (
+        add_issue(
+            issues,
+            "warning",
+            "Keyword Stuffing",
+            (
                 f"{len(stuffing_warnings)} keyword(s) have "
                 "unusually high density."
             ),
-            "recommendation": (
-                "Avoid repeating keywords unnaturally. "
-                "Focus on readable, useful content."
+            (
+                "Avoid repetitive keyword usage. Prioritize natural, "
+                "readable content and topic coverage."
             )
-        })
+        )
 
     # ========================================================
-    # REMOVE INTERNAL RELEVANCE FIELD FROM FRONTEND DATA
+    # REMOVE INTERNAL RELEVANCE FIELD
     # ========================================================
 
     for item in keyword_analysis:
+        item.pop(
+            "relevance",
+            None
+        )
 
+    # Also remove internal relevance from opportunities
+    for item in opportunities:
         item.pop(
             "relevance",
             None
@@ -904,19 +982,15 @@ def analyze_seo(data: dict) -> dict:
     )
 
     if score >= 90:
-
         grade = "Excellent"
 
     elif score >= 75:
-
         grade = "Good"
 
     elif score >= 50:
-
         grade = "Needs Improvement"
 
     else:
-
         grade = "Poor"
 
     # ========================================================
@@ -924,19 +998,11 @@ def analyze_seo(data: dict) -> dict:
     # ========================================================
 
     return {
-
         "score": score,
-
         "grade": grade,
-
         "issues": issues,
-
         "passed": passed,
-
         "keyword_analysis": keyword_analysis,
-
         "keyword_opportunities": opportunities,
-
         "keyword_stuffing_warnings": stuffing_warnings
-
     }
