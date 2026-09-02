@@ -22,6 +22,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState("");
+  const [auditHistory, setAuditHistory] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("searchpilot_audit_history") || "[]"); }
+    catch { return []; }
+  });
 
   const API = import.meta.env.VITE_API_URL || "";
 
@@ -36,6 +41,11 @@ function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    try { localStorage.setItem("searchpilot_audit_history", JSON.stringify(auditHistory)); }
+    catch (err) { console.warn("Could not persist audit history:", err); }
+  }, [auditHistory]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
     localStorage.setItem("theme", theme === "light" ? "dark" : "light");
@@ -45,7 +55,7 @@ function App() {
   // ANALYZE WEBSITE (triggers crawl)
   // =========================================================
 
-  const analyzeWebsite = async () => {
+  const analyzeWebsite = async (requestedAuditType = auditType) => {
     if (!url.trim()) {
       setError("Please enter a website URL.");
       return;
@@ -68,7 +78,7 @@ function App() {
 
     try {
       const endpoint =
-        auditType === "site"
+        requestedAuditType === "site"
           ? `${API}/site-crawl`
           : `${API}/crawl`;
 
@@ -100,9 +110,8 @@ function App() {
         );
       }
 
-      if (auditType === "site") {
+      if (requestedAuditType === "site") {
         setSiteResult(data);
-        setActiveTab("site");
         const averageScore = Math.round(Number(data?.average_score) || 0);
         const grade =
           averageScore >= 90
@@ -127,7 +136,6 @@ function App() {
         ].slice(0, 10));
       } else {
         setResult(data);
-        setActiveTab("page");
         const score = Number(data?.seo_analysis?.score) || 0;
         setAuditHistory((prev) => [
           {
@@ -532,14 +540,43 @@ function App() {
               </div>
             </div>
 
-            {/* Empty state welcome card */}
-            <div className="empty-state-saas">
-              <div className="empty-state-icon">🔎</div>
-              <h3>No audit loaded</h3>
-              <p>
-                Enter a website URL above and select the audit depth to begin generating SEO score cards.
-              </p>
-            </div>
+            {auditHistory.length === 0 ? (
+              <div className="empty-state-saas">
+                <div className="empty-state-icon">🔎</div>
+                <h3>No audit history yet</h3>
+                <p>Enter a website URL above and select the audit depth to generate your first SEO report.</p>
+              </div>
+            ) : (
+              <section className="section-saas" style={{ marginTop: "24px" }}>
+                <div className="section-header-saas">
+                  <h3>Recent Audits</h3>
+                  <span>Last {auditHistory.length} analyses</span>
+                </div>
+                <div className="saas-table-wrapper">
+                  <table className="saas-table">
+                    <thead><tr><th>URL</th><th>Type</th><th>Score</th><th>Grade</th><th>Audited</th></tr></thead>
+                    <tbody>
+                      {auditHistory.map((audit) => (
+                        <tr key={audit.id} className="table-row-clickable" onClick={() => {
+                          setError(""); setAuditType(audit.type);
+                          if (audit.type === "site") {
+                            setSiteResult(audit.data); setResult(null); setSelectedSitePageResult(null); setActiveTab("site");
+                          } else {
+                            setResult(audit.data); setSiteResult(null); setSelectedSitePageResult(null); setActiveTab("page");
+                          }
+                        }}>
+                          <td><div className="table-cell-title">{audit.url}</div></td>
+                          <td>{audit.type === "site" ? "Site Audit" : "Page Audit"}</td>
+                          <td><span className="table-cell-score">{Math.round(audit.score)}/100</span></td>
+                          <td><span className="score-badge">{audit.grade}</span></td>
+                          <td>{new Date(audit.timestamp).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
           </div>
         )}
 
@@ -905,7 +942,7 @@ function App() {
                 <span className="report-type-badge">PAGE AUDIT</span>
                 <h3>Analyze a webpage</h3>
                 <p>Enter a URL below to run a detailed SEO audit.</p>
-                <div className="search-box-saas" style={{maxWidth: "680px", margin: "24px auto 0"}}>
+                <div className="search-box-saas" style={{ maxWidth: "680px", margin: "24px auto 0" }}>
                   <input
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
@@ -914,7 +951,7 @@ function App() {
                   <button
                     onClick={() => {
                       setAuditType("page");
-                      analyzeWebsite();
+                      analyzeWebsite("page");
                     }}
                     disabled={loading || !url.trim()}
                   >
@@ -1356,8 +1393,15 @@ function App() {
             ) : (
               <div className="empty-state-saas">
                 <div className="empty-state-icon">🌐</div>
-                <h3>No Site Audit Report</h3>
-                <p>Run a Site Audit on the Dashboard to see crawled pages and health scores.</p>
+                <span className="report-type-badge">SITE AUDIT</span>
+                <h3>Analyze an entire website</h3>
+                <p>Enter a website URL to crawl multiple pages and evaluate site-wide SEO health.</p>
+                <div className="search-box-saas" style={{ maxWidth: "680px", margin: "24px auto 0" }}>
+                  <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" />
+                  <button onClick={() => { setAuditType("site"); analyzeWebsite("site"); }} disabled={loading || !url.trim()}>
+                    {loading ? "Analyzing..." : "Analyze Site"}
+                  </button>
+                </div>
               </div>
             )}
           </>
