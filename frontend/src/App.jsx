@@ -902,8 +902,25 @@ function App() {
             ) : (
               <div className="empty-state-saas">
                 <div className="empty-state-icon">📄</div>
-                <h3>No Page Audit Report</h3>
-                <p>Run a Page Audit on the Dashboard to see detailed SEO analyses.</p>
+                <span className="report-type-badge">PAGE AUDIT</span>
+                <h3>Analyze a webpage</h3>
+                <p>Enter a URL below to run a detailed SEO audit.</p>
+                <div className="search-box-saas" style={{maxWidth: "680px", margin: "24px auto 0"}}>
+                  <input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://example.com"
+                  />
+                  <button
+                    onClick={() => {
+                      setAuditType("page");
+                      analyzeWebsite();
+                    }}
+                    disabled={loading || !url.trim()}
+                  >
+                    {loading ? "Analyzing..." : "Analyze Page"}
+                  </button>
+                </div>
               </div>
             )}
           </>
