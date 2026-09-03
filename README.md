@@ -66,3 +66,10 @@ FastAPI Backend
             ├── Technical checks
             ├── Content analysis
             └── Keyword analysis
+## Testing
+
+Run the backend test suite with:
+
+```bash
+python3 -m pytest -q tests/test_backend.py
+```
